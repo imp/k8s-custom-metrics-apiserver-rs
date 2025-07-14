@@ -22,10 +22,10 @@ pub struct CustomMetricInfo {
 /// they may wish to query the main Kubernetes API server, or may
 /// wish to simply make use of stored information in their TSDB.
 ///
-pub trait CustomMetricsProvider {
-    type Metric: CustomMetric;
-    type Selector: labels::Selector;
-    type MetricSelector: labels::Selector;
+pub trait CustomMetricsProvider<Selector = metav1::LabelSelector> {
+    type K: k8s::Resource + k8s::ListableResource;
+    // type Selector: labels::Selector = u8;
+    // type MetricSelector: labels::Selector;
     type Err;
 
     /// ListAllMetrics provides a list of all available metrics at
@@ -42,17 +42,55 @@ pub trait CustomMetricsProvider {
         &self,
         name: types::NamespacedName,
         info: CustomMetricInfo,
-        metric_selector: Self::MetricSelector,
-    ) -> Result<custom_metricsv1::MetricValue<Self::Metric>, Self::Err>;
+        metric_selector: Selector,
+    ) -> Result<cmetricsv1::MetricValue<Self::K>, Self::Err>;
 
     /// GetMetricBySelector fetches a particular metric for a set of objects matching
     /// the given label selector.  The namespace will be empty if the metric is root-scoped.
     ///
     fn get_metric_by_selector(
         &self,
-        namespace: impl AsRef<str>,
-        selector: Self::Selector,
+        namespace: &str,
+        selector: Selector,
         info: CustomMetricInfo,
-        metric_selector: Self::MetricSelector,
-    ) -> Result<custom_metricsv1::MetricValueList<Self::Metric>, Self::Err>;
+        metric_selector: Selector,
+    ) -> Result<cmetricsv1::MetricValueList<Self::K>, Self::Err>;
+}
+
+impl CustomMetricInfo {
+    pub fn namespaced<K>(name: impl ToString) -> Self
+    where
+        K: k8s::Resource<Scope = k8s::NamespaceResourceScope>,
+    {
+        let group_resource = schema::GroupResource {
+            group: K::GROUP.to_string(),
+            resource: K::URL_PATH_SEGMENT.to_string(),
+        };
+        let namespaced = true;
+        let metric = name.to_string();
+
+        Self {
+            group_resource,
+            namespaced,
+            metric,
+        }
+    }
+
+    pub fn cluster<K>(name: impl ToString) -> Self
+    where
+        K: k8s::Resource<Scope = k8s::ClusterResourceScope>,
+    {
+        let group_resource = schema::GroupResource {
+            group: K::GROUP.to_string(),
+            resource: K::URL_PATH_SEGMENT.to_string(),
+        };
+        let namespaced = false;
+        let metric = name.to_string();
+
+        Self {
+            group_resource,
+            namespaced,
+            metric,
+        }
+    }
 }

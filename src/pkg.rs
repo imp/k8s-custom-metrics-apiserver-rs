@@ -4,3 +4,6 @@ pub mod labels;
 pub mod runtime;
 pub mod selection;
 pub mod types;
+
+#[derive(Debug)]
+pub struct BasicSelector;

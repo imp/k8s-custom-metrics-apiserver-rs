@@ -9,19 +9,23 @@
 #![warn(missing_debug_implementations)]
 #![warn(rust_2018_compatibility)]
 #![warn(rust_2021_compatibility)]
+#![warn(rust_2024_compatibility)]
 #![warn(rust_2018_idioms)]
 #![warn(trivial_casts)]
 #![warn(unused)]
 #![deny(warnings)]
 
+use std::collections::BTreeMap;
+use std::collections::BTreeSet;
+
 use std::fmt;
 use std::str;
 
-// use k8s_openapi as k8s;
+use k8s_openapi as k8s;
+use k8s_openapi::apimachinery::pkg::apis::meta::v1 as metav1;
 
 // use k8s::apimachinery::pkg::runtime;
-use k8s_metrics::custom_metrics::v1beta2 as custom_metricsv1;
-use k8s_metrics::custom_metrics::CustomMetric;
+use k8s_metrics::custom_metrics::v1beta2 as cmetricsv1;
 use k8s_metrics::external_metrics::v1beta1 as external_metricsv1;
 use k8s_metrics::external_metrics::ExternalMetric;
 
@@ -37,3 +41,4 @@ pub use external::ExternalMetricsProvider;
 mod custom;
 mod external;
 pub mod pkg;
+pub mod server;
